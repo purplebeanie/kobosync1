@@ -14,6 +14,7 @@ __status__ = "Development"
 import sqlite3
 import sys
 import os
+import config
 from xml.sax.saxutils import escape
 
 ##allow imports from evernote
@@ -21,18 +22,17 @@ sys.path.insert(0,os.path.dirname(os.path.abspath(__file__))+'/evernote/lib')
 
 import evernote.edam.userstore.constants as UserStoreConstants
 import evernote.edam.type.ttypes as Types
+import config
 
 from evernote.api.client import EvernoteClient
 from evernote.edam.notestore.ttypes import NoteFilter, NotesMetadataResultSpec
 
 
-kobo_db_loc = "/Volumes/KOBOeReader/.kobo/KoboReader.sqlite"
-evernote_dev_token = "get_your_developer_token_from_evernote"
-evernote_notestore = "get_your_evernote_notestore_from_evernote"
+
 
 def sendtoevernote(row):
 	print 'sendrowtoevernote'
-	client = EvernoteClient(token=evernote_dev_token)
+	client = EvernoteClient(token=config.evernote_dev_token)
 	userStore = client.get_user_store()
 	noteStore = client.get_note_store()
 	user = userStore.getUser()
@@ -64,12 +64,12 @@ def sendtoevernote(row):
 
 
 def main():
-	print 'hello from kobosync - I will be importing bookmarks from '+kobo_db_loc
-	print 'I will be using evernote dev token '+evernote_dev_token
-	print 'I will be using evernote note store '+evernote_notestore
+	print 'hello from kobosync - I will be importing bookmarks from '+config.kobo_db_loc
+	print 'I will be using evernote dev token '+config.evernote_dev_token
+	print 'I will be using evernote note store '+config.evernote_notestore
 	print 'I am using the sourceurl: in the filter to match existing records'
 
-	conn = sqlite3.connect(kobo_db_loc)
+	conn = sqlite3.connect(config.kobo_db_loc)
 	c=conn.cursor()
 	for row in c.execute("select content.BookTitle,Bookmark.BookmarkID,Bookmark.Text,Bookmark.Annotation from Bookmark join content on content.ContentID = Bookmark.ContentID"):
 		sendtoevernote(row)
