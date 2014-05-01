@@ -32,7 +32,7 @@ from evernote.edam.notestore.ttypes import NoteFilter, NotesMetadataResultSpec
 
 def sendtoevernote(row):
 	print 'sendrowtoevernote'
-	client = EvernoteClient(token=config.evernote_dev_token)
+	client = EvernoteClient(token=config.evernote_dev_token,sandbox=False)
 	userStore = client.get_user_store()
 	noteStore = client.get_note_store()
 	user = userStore.getUser()
@@ -44,7 +44,7 @@ def sendtoevernote(row):
 
 	spec=NotesMetadataResultSpec(includeTitle=True)
 
-	ourNoteList = noteStore.findNotesMetadata(evernote_dev_token,filter,0,1,spec)			#we only want to return 1
+	ourNoteList = noteStore.findNotesMetadata(config.evernote_dev_token,filter,0,1,spec)			#we only want to return 1
 	if len(ourNoteList.notes) > 0:
 		print 'note exists'
 	else:
