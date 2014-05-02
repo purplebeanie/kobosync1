@@ -16,6 +16,7 @@ import sys
 import os
 import config
 from xml.sax.saxutils import escape
+from time import sleep
 
 ##allow imports from evernote
 sys.path.insert(0,os.path.dirname(os.path.abspath(__file__))+'/evernote/lib')
@@ -26,18 +27,38 @@ import config
 
 from evernote.api.client import EvernoteClient
 from evernote.edam.notestore.ttypes import NoteFilter, NotesMetadataResultSpec
+import evernote.edam.error.ttypes as Errors
 
 
+
+client = None
+noteStore = None
+userStore = None
+user = None
+
+def connect_to_evernote():
+	"""Connects to evernote and sets up the globals"""
+	global client
+	global noteStore
+	global userStore
+	global user
+	try:
+		client = EvernoteClient(token=config.evernote_dev_token,sandbox=False)
+		userStore = client.get_user_store()
+		noteStore = client.get_note_store()
+		user = userStore.getUser()
+		print 'Connected to Evernote'
+	except Errors.EDAMSystemException, e:
+		if e.errorCode == Errors.EDAMErrorCode.RATE_LIMIT_REACHED:
+			print "Rate limit reached"
+			print "Retry yout request in %d seconds" % e.rateLimitDuration
+			sleep(e.rateLimitDuration)
 
 
 def sendtoevernote(row):
 	"""This function is used to send to evernote. It's just a testing implementation
 	TODO: It needs to properly handle time outs rather than the ugly method it is using currently"""
 	print 'sendrowtoevernote'
-	client = EvernoteClient(token=config.evernote_dev_token,sandbox=False)
-	userStore = client.get_user_store()
-	noteStore = client.get_note_store()
-	user = userStore.getUser()
 
 	#user logged in now let's see if the note exists?
 	print 'Check if note: '+row[1]+' exists'
@@ -76,6 +97,9 @@ def main():
 	print 'I will be using evernote dev token '+config.evernote_dev_token
 	print 'I will be using evernote note store '+config.evernote_notestore
 	print 'I am using the sourceurl: in the filter to match existing records'
+
+	while noteStore == None:
+		connect_to_evernote()
 
 	conn = sqlite3.connect(config.kobo_db_loc)
 	c=conn.cursor()
