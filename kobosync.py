@@ -31,6 +31,8 @@ from evernote.edam.notestore.ttypes import NoteFilter, NotesMetadataResultSpec
 
 
 def sendtoevernote(row):
+	"""This function is used to send to evernote. It's just a testing implementation
+	TODO: It needs to properly handle time outs rather than the ugly method it is using currently"""
 	print 'sendrowtoevernote'
 	client = EvernoteClient(token=config.evernote_dev_token,sandbox=False)
 	userStore = client.get_user_store()
@@ -53,14 +55,20 @@ def sendtoevernote(row):
 		note.title = row[0]
 		note.content = '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd">'
 		note.content += '<en-note>'
-		note.content += '<p><b>TEXT</b></p><p>'+escape(row[2].encode('ascii','ignore'))+'</p>'
+		if (row[2] is not None):
+			note.content += '<p><b>TEXT</b></p><p>'+escape(row[2].encode('ascii','ignore'))+'</p>'
 		if (row[3] is not None):
 			print row[3].encode('ascii','ignore')
 			note.content += '<p><b>ANNOTATION</b></p><p>'+escape(row[3].encode('ascii','ignore'))+'</p>'
 		note.content += '<p>kobosync-link='+row[1]+'</p>'
 		note.content += '</en-note>'
-		note = noteStore.createNote(note)
-		print 'note created'
+		try:
+			note = noteStore.createNote(note)
+		except Errors.EDAMSystemException, e:
+			if e.errorCode == Errors.EDAMErrorCode.RATE_LIMIT_REACHED:
+				print "Rate limit Reached"
+				print "Retry your request in %d seconds" % e.rateLimitDuration
+				sleep(e.rateLimitDuration)
 
 
 def main():
